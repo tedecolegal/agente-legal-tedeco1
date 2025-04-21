@@ -5,18 +5,19 @@ from fastapi.templating import Jinja2Templates
 import uvicorn
 from langchain.chains import RetrievalQA
 from langchain_openai import ChatOpenAI
-from app import vectordb  # conecta con tu ChromaDB ya cargado por leer_pdf.py
+from app import vectordb  # Asegúrate de que app.py esté en la raíz y cargado en GitHub
 
+# Crear app de FastAPI
 app = FastAPI()
 
-# Configuración para Render
+# Directorio de plantillas y archivos estáticos
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# ✅ Configurar el modelo GPT-4
+# ⚙️ Configura el modelo GPT-4
 llm = ChatOpenAI(model="gpt-4", temperature=0)
 
-# ✅ Cadena de preguntas y respuestas con recuperación de PDFs
+# 🔍 Cadena de QA con búsqueda en PDFs indexados
 qa_chain = RetrievalQA.from_chain_type(
     llm=llm,
     retriever=vectordb.as_retriever(),
@@ -40,8 +41,9 @@ async def form_post(request: Request, pregunta: str = Form(...)):
         "respuesta": respuesta
     })
 
-# Punto de entrada local (para pruebas, no lo usará Render)
+# Esto solo corre localmente, no en Render
 if __name__ == "__main__":
     uvicorn.run("web:app", host="0.0.0.0", port=8000, reload=True)
+
 
 
