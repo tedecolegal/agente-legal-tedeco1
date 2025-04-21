@@ -1,49 +1,58 @@
-from fastapi import FastAPI, Request, Form
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-import uvicorn
+import os
+from dotenv import load_dotenv
+from flask import Flask, request, render_template
 from langchain.chains import RetrievalQA
-from langchain_openai import ChatOpenAI
-from app import vectordb  # Asegúrate de que app.py esté en la raíz y cargado en GitHub
+from langchain_community.document_loaders import TextLoader
+from langchain_community.vectorstores import Chroma
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
-# Crear app de FastAPI
-app = FastAPI()
+# Cargar variables de entorno
+load_dotenv()
+openai_api_key = os.getenv("OPENAI_API_KEY")
 
-# Directorio de plantillas y archivos estáticos
-templates = Jinja2Templates(directory="templates")
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Configuración del modelo GPT-4
+llm = ChatOpenAI(
+    model_name="gpt-4",
+    temperature=0.2,
+    openai_api_key=openai_api_key
+)
 
-# ⚙️ Configura el modelo GPT-4
-llm = ChatOpenAI(model="gpt-4", temperature=0)
+# Cargar base de datos Chroma existente
+persist_directory = "chroma_db"
+embedding = OpenAIEmbeddings(api_key=openai_api_key)
+vectordb = Chroma(
+    persist_directory=persist_directory,
+    embedding_function=embedding
+)
 
-# 🔍 Cadena de QA con búsqueda en PDFs indexados
-qa_chain = RetrievalQA.from_chain_type(
+# Preparar el sistema de recuperación
+retriever = vectordb.as_retriever()
+
+# Crear cadena de preguntas y respuestas
+chain = RetrievalQA.from_chain_type(
     llm=llm,
-    retriever=vectordb.as_retriever(),
+    chain_type="stuff",
+    retriever=retriever,
     return_source_documents=True
 )
 
-@app.get("/chat", response_class=HTMLResponse)
-async def form_get(request: Request):
-    return templates.TemplateResponse("chat.html", {"request": request})
+# Crear aplicación Flask
+app = Flask(__name__)
 
-@app.post("/chat", response_class=HTMLResponse)
-async def form_post(request: Request, pregunta: str = Form(...)):
-    try:
-        resultado = qa_chain({"query": pregunta})
-        respuesta = resultado["result"]
-    except Exception as e:
-        respuesta = f"❌ Error al procesar la pregunta: {str(e)}"
-    return templates.TemplateResponse("chat.html", {
-        "request": request,
-        "pregunta": pregunta,
-        "respuesta": respuesta
-    })
+@app.route('/')
+def home():
+    return "🧠 Agente Legal TEDECO1 está activo. Visita /chat para hacer preguntas."
 
-# Esto solo corre localmente, no en Render
+@app.route('/chat', methods=['GET', 'POST'])
+def chat():
+    respuesta = ""
+    if request.method == 'POST':
+        pregunta = request.form['pregunta']
+        if pregunta:
+            resultado = chain.run(pregunta)
+            respuesta = resultado
+    return render_template("chat.html", respuesta=respuesta)
+
 if __name__ == "__main__":
-    uvicorn.run("web:app", host="0.0.0.0", port=8000, reload=True)
-
-
+    app.run(debug=True)
 
