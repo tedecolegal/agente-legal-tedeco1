@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Agente Legal TEDECO</title>
+</head>
+<body>
+    <h1>🧠 Asistente Legal Inteligente</h1>
+    <form method="POST">
+        <label for="pregunta">Haz tu pregunta:</label><br>
+        <textarea name="pregunta" rows="4" cols="50">{{ pregunta }}</textarea><br>
+        <input type="submit" value="Preguntar">
+    </form>
+    {% if respuesta %}
+        <h2>Respuesta:</h2>
+        <p>{{ respuesta }}</p>
+    {% endif %}
+</body>
+</html>

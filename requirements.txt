@@ -1,0 +1,1 @@
+flaskgunicornopenailangchainlangchain-communitylangchain-openailangchain-chromachromadbpdf2imagepytesseractpypdf2tiktoken
