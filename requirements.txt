@@ -1,1 +1,1 @@
-flaskgunicornopenailangchainlangchain-communitylangchain-openailangchain-chromachromadbpdf2imagepytesseractpypdf2tiktokenpython-multipart
+fastapiuvicornlangchainlangchain-openailangchain-chromaopenaipython-dotenvjinja2
