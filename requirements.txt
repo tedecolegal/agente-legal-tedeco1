@@ -1,1 +1,1 @@
-fastapiuvicornlangchainlangchain-openailangchain-chromaopenaipython-dotenvjinja2
+fastapiuvicornlangchainlangchain-openailangchain-chromaopenaipython-dotenvjinja2gunicorn
