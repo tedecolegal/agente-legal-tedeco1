@@ -1,37 +1,31 @@
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from langchain.chains import RetrievalQA
 from langchain_openai import ChatOpenAI
-from langchain.chains import ConversationalRetrievalChain
-from app import vectordb  # Aquí se importa tu Chroma ya indexado
+from app import vectordb
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# ⚙️ CONFIGURA GPT-4 (puedes poner "gpt-3.5-turbo" si prefieres)
-llm = ChatOpenAI(model="gpt-4", temperature=0)
-
-# 🔗 CONECTA LA BASE DE DATOS VECTORIAL
-qa_chain = ConversationalRetrievalChain.from_llm(
-    llm=llm,
-    retriever=vectordb.as_retriever(),
-    return_source_documents=True,
+# Usa GPT-4 para generar respuestas más avanzadas
+qa_chain = RetrievalQA.from_chain_type(
+    llm=ChatOpenAI(model="gpt-4"),
+    retriever=vectordb.as_retriever()
 )
 
-chat_history = []
-
 @app.get("/", response_class=HTMLResponse)
-async def root():
-    return "El agente legal TEDECO1 está en línea. Visita /chat para usarlo."
-
-@app.get("/chat", response_class=HTMLResponse)
-async def get_chat(request: Request):
-    return templates.TemplateResponse("chat.html", {"request": request, "result": None})
+async def read_root(request: Request):
+    return templates.TemplateResponse("chat.html", {"request": request, "response": ""})
 
 @app.post("/chat", response_class=HTMLResponse)
-async def post_chat(request: Request, question: str = Form(...)):
-    global chat_history
-    result = qa_chain({"question": question, "chat_history": chat_history})
-    chat_history.append((question, result["answer"]))
-    return templates.TemplateResponse("chat.html", {"request": request, "result": result["answer"]})
+async def chat(request: Request, user_input: str = Form(...)):
+    try:
+        response = qa_chain.run(user_input)
+    except Exception as e:
+        response = f"⚠️ Error al procesar la pregunta: {e}"
+    return templates.TemplateResponse("chat.html", {"request": request, "response": response})
+
 

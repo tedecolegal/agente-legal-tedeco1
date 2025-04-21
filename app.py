@@ -6,10 +6,13 @@ from langchain_chroma import Chroma
 # Cargar variables de entorno
 load_dotenv()
 
-# Cargar base de datos ya generada por leer_pdf.py
+# Ruta donde están los datos persistentes de Chroma
 persist_directory = "chroma_db"
+
+# Configurar embeddings con tu API key
 embedding = OpenAIEmbeddings()
 
+# Cargar la base de datos indexada
 vectordb = Chroma(
     persist_directory=persist_directory,
     embedding_function=embedding
