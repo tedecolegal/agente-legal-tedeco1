@@ -21,6 +21,7 @@ def chat():
             chain = load_qa_chain(llm, chain_type="stuff")
             retriever = vectordb.as_retriever()
             docs = retriever.get_relevant_documents(pregunta)
+            print(docs)
             respuesta = chain.run(input_documents=docs, question=pregunta)
     return render_template("chat.html", pregunta=pregunta, respuesta=respuesta)
 
